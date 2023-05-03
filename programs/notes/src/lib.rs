@@ -1,15 +1,41 @@
 use anchor_lang::prelude::*;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("9igkDBzMdRiteme5sxhLkVqWfYLDPLGt937GeWRZCK9T");
 
 #[program]
 pub mod notes {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn write_note(ctx: Context<WriteNote>, note: String) -> Result<()> {
+        msg!("Creating a note inside notes program...");
+
+        let new_note = &mut ctx.accounts.note;
+
+        new_note.authority = ctx.accounts.authority.key();
+        new_note.note = note;
+
+        msg!("Note: {}", new_note.note);
+        msg!("Note authority: {}", new_note.authority);
+
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-pub struct Initialize {}
+pub struct WriteNote<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + 32 + 32
+    )]
+    pub note: Account<'info, Note>,
+    pub system_program: Program<'info, System>,
+}
+
+#[account]
+pub struct Note {
+    pub authority: Pubkey,
+    pub note: String,
+}
